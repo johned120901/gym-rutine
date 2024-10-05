@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <!-- Definición de la codificación de caracteres y de la vista responsiva -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Rutina</title>
+    <!-- Enlace a la hoja de estilos CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+
+<body>
+    <h2>Editar Rutina</h2>
+    <!-- Formulario para editar la rutina -->
+    <form id="edit-routine-form">
+        <label for="routine_name">Nombre de la Rutina:</label>
+        <!-- Campo de texto para el nombre de la rutina, precargado con el valor actual -->
+        <input type="text" id="routine_name" name="routine_name" value="{{ routine.routine_name }}" required>
+
+        <div id="exercises-container">
+            <!-- Iterar sobre los ejercicios existentes en la rutina -->
+            {% for exercise in routine.exercises %}
+            <div class="exercise">
+                <label for="exercise_name">Nombre del Ejercicio:</label>
+                <!-- Campo de texto para el nombre del ejercicio, precargado con el valor actual -->
+                <input type="text" name="exercise_name" value="{{ exercise.name }}" required>
+                <label for="sets">Series:</label>
+                <!-- Campo para ingresar la cantidad de series, precargado -->
+                <input type="number" name="sets" value="{{ exercise.sets }}" required>
+                <label for="reps">Repeticiones:</label>
+                <!-- Campo para ingresar la cantidad de repeticiones, precargado -->
+                <input type="number" name="reps" value="{{ exercise.reps }}" required>
+                <!-- Botón para eliminar el ejercicio -->
+                <button type="button" class="remove-exercise">Eliminar</button>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Botón para agregar otro ejercicio al formulario -->
+        <button type="button" id="add-exercise">Agregar Otro Ejercicio</button>
+        <!-- Botón para guardar los cambios en la rutina -->
+        <button type="submit">Guardar Cambios</button>
+    </form>
+
+    <script>
+        // Función para agregar ejercicios al formulario
+        document.getElementById('add-exercise').addEventListener('click', function () {
+            const container = document.getElementById('exercises-container');
+            const newExercise = document.createElement('div');
+            newExercise.classList.add('exercise');
+            newExercise.innerHTML = `
+                <label for="exercise_name">Nombre del Ejercicio:</label>
+                <input type="text" name="exercise_name" required>
+                <label for="sets">Series:</label>
+                <input type="number" name="sets" required>
+                <label for="reps">Repeticiones:</label>
+                <input type="number" name="reps" required>
+                <!-- Botón para eliminar un ejercicio del formulario -->
+                <button type="button" class="remove-exercise">Eliminar</button>
+            `;
+            container.appendChild(newExercise); // Agregar el nuevo ejercicio al contenedor
+        });
+
+        // Función para eliminar ejercicios
+        document.addEventListener('click', function (e) {
+            // Verifica si el botón de eliminar fue presionado
+            if (e.target.classList.contains('remove-exercise')) {
+                e.target.parentElement.remove(); // Elimina el elemento del DOM
+            }
+        });
+
+        // Enviar el formulario de edición al servidor
+        document.getElementById('edit-routine-form').addEventListener('submit', function (e) {
+            e.preventDefault(); // Prevenir el comportamiento predeterminado del formulario
+
+            const routineName = document.getElementById('routine_name').value;
+            // Obtener los ejercicios del formulario
+            const exercises = Array.from(document.querySelectorAll('.exercise')).map(exercise => {
+                return {
+                    name: exercise.querySelector('input[name="exercise_name"]').value,
+                    sets: exercise.querySelector('input[name="sets"]').value,
+                    reps: exercise.querySelector('input[name="reps"]').value,
+                };
+            });
+
+            // Enviar los datos de la rutina editada al servidor mediante una solicitud AJAX
+            fetch('/edit_routine/{{ routine.id }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ routine_name: routineName, exercises: exercises })
+            })
+            .then(response => response.json()) // Procesar la respuesta JSON del servidor
+            .then(data => {
+                if (data.success) {
+                    alert('Rutina actualizada con éxito'); // Mensaje de éxito
+                    window.location.href = '/dashboard'; // Redirigir a la página de inicio o dashboard
+                } else {
+                    alert('Error al actualizar la rutina'); // Mensaje de error
+                }
+            });
+        });
+    </script>
+</body>
+</html>

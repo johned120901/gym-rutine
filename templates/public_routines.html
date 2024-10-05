@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rutinas Públicas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+
+<body>
+    <h1>Rutinas Públicas</h1>
+    
+    <!-- Botón para regresar al dashboard -->
+    <a href="/dashboard" class="btn regresar">Regresar al Dashboard</a>
+    
+    <div>
+        {% for routine in routines %} <!-- Iterar sobre las rutinas públicas -->
+        <div class="routine">
+            <h2>{{ routine.routine_name }}</h2>
+            <p>Creado por: {{ routine.user.username }}</p>
+            <h3>Ejercicios:</h3>
+            <ul>
+                {% for exercise in routine.exercises %} <!-- Iterar sobre los ejercicios de la rutina -->
+                <li>
+                    {{ exercise.name }} - {{ exercise.sets }} series de {{ exercise.reps }} repeticiones
+                </li>
+                {% endfor %}
+            </ul>
+
+            {% if routine.id in user_favorites %} <!-- Verificar si la rutina es favorita del usuario -->
+            <button class="favorite-btn" data-routine-id="{{ routine.id }}" data-action="remove">
+                Quitar de Favoritos
+            </button>
+            {% else %}
+            <button class="favorite-btn" data-routine-id="{{ routine.id }}" data-action="add">
+                Agregar a Favoritos
+            </button>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        document.querySelectorAll('.favorite-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const routineId = this.getAttribute('data-routine-id'); // Obtener ID de la rutina
+                const action = this.getAttribute('data-action'); // Obtener acción (agregar/quitar)
+                toggleFavorite(routineId, action); // Llamar a la función para alternar favoritos
+            });
+        });
+
+        function toggleFavorite(routineId, action) {
+            fetch(`/favorite/${routineId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ action: action }) // Enviar acción en formato JSON
+            })
+                .then(response => response.json()) // Parsear la respuesta JSON
+                .then(data => {
+                    alert(data.message); // Mostrar mensaje de éxito
+                    location.reload(); // Recargar la página para actualizar el estado
+                })
+                .catch(error => {
+                    console.error('Error:', error); // Manejar errores
+                });
+        }
+    </script>
+</body>
+
+</html>

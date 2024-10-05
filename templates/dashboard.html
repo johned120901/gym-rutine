@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <!-- Definición de la codificación de caracteres y de la vista responsiva -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguimiento de Ejercicios - Dashboard</title>
+    <!-- Enlace a la hoja de estilos CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Mensaje de bienvenida al usuario -->
+        <h2>Bienvenido, {{ session['username'] }}</h2>
+
+        <!-- Sección que muestra las rutinas del usuario -->
+        <h3>Tus Rutinas</h3>
+        <ul id="routines-list">
+            {% for routine in routines %}
+            <li>
+                <!-- Nombre de la rutina -->
+                <strong>{{ routine.routine_name }}</strong>
+                <ul>
+                    <!-- Lista de ejercicios dentro de la rutina -->
+                    {% for exercise in routine.exercises %}
+                    <li>{{ exercise.name }}: {{ exercise.sets }} series de {{ exercise.reps }} repeticiones</li>
+                    {% endfor %}
+                </ul>
+                <p>ID de rutina: {{ routine.id }}</p>
+
+                <!-- Botón para eliminar la rutina -->
+                <button type="button" class="delete-button" data-routine-id="{{ routine.id }}">Eliminar</button>
+
+                <!-- Enlace para editar la rutina -->
+                <a href="/edit_routine/{{ routine.id }}" class="edit-button">Editar</a>
+            </li>
+            {% endfor %}
+        </ul>
+
+        <!-- Formulario para agregar nuevas rutinas -->
+        <form id="routine-form">
+            <label for="routine_name">Nombre de la Rutina:</label>
+            <input type="text" id="routine_name" name="routine_name" required>
+
+            <div id="exercises-container">
+                <div class="exercise">
+                    <label for="exercise_name">Nombre del Ejercicio:</label>
+                    <input type="text" name="exercise_name" required>
+                    <label for="sets">Series:</label>
+                    <input type="number" name="sets" required>
+                    <label for="reps">Repeticiones:</label>
+                    <input type="number" name="reps" required>
+                    <!-- Botón para eliminar un ejercicio del formulario -->
+                    <button type="button" class="remove-exercise">Eliminar</button>
+                </div>
+            </div>
+            <!-- Botón para agregar otro ejercicio al formulario -->
+            <button type="button" id="add-exercise">Agregar Otro Ejercicio</button>
+            <button type="submit">Agregar Rutina</button>
+        </form>
+
+        <script>
+            // Manejo de la adición y eliminación de ejercicios del formulario
+            document.getElementById('add-exercise').addEventListener('click', function () {
+                const container = document.getElementById('exercises-container');
+                const newExercise = document.createElement('div');
+                newExercise.classList.add('exercise');
+                newExercise.innerHTML = `
+                    <label for="exercise_name">Nombre del Ejercicio:</label>
+                    <input type="text" name="exercise_name" required>
+                    <label for="sets">Series:</label>
+                    <input type="number" name="sets" required>
+                    <label for="reps">Repeticiones:</label>
+                    <input type="number" name="reps" required>
+                    <button type="button" class="remove-exercise">Eliminar</button>
+                `;
+                container.appendChild(newExercise);
+            });
+
+            // Manejo de la eliminación de ejercicios
+            document.addEventListener('click', function (e) {
+                if (e.target.classList.contains('remove-exercise')) {
+                    e.target.parentElement.remove();
+                }
+            });
+
+            // Manejo del envío del formulario para agregar una rutina
+            document.getElementById('routine-form').addEventListener('submit', function (e) {
+                e.preventDefault(); // Prevenir el comportamiento predeterminado del formulario
+
+                const routineName = document.getElementById('routine_name').value;
+                const exercises = Array.from(document.querySelectorAll('.exercise')).map(exercise => {
+                    return {
+                        name: exercise.querySelector('input[name="exercise_name"]').value,
+                        sets: exercise.querySelector('input[name="sets"]').value,
+                        reps: exercise.querySelector('input[name="reps"]').value,
+                    };
+                });
+
+                // Envío de la rutina a través de una solicitud AJAX
+                fetch('/add_routine', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ routine_name: routineName, exercises: exercises })
+                })
+
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Rutina añadida con éxito');
+                            loadRoutines(); // Cargar rutinas después de agregar
+
+                            // Limpiar el formulario después de agregar la rutina
+                            document.getElementById('routine-form').reset();  // Limpiar campos del formulario
+                            document.getElementById('exercises-container').innerHTML = '';  // Limpiar los ejercicios añadidos
+                        } else {
+                            alert('Error al agregar la rutina');
+                        }
+                    });
+            });
+
+            // Manejo de los botones de eliminar rutina
+            document.querySelectorAll('.delete-button').forEach(button => {
+                button.addEventListener('click', function () {
+                    const routineId = this.getAttribute('data-routine-id');
+                    deleteRoutine(routineId);
+                });
+            });
+
+            // Función para eliminar una rutina
+            function deleteRoutine(routineId) {
+                fetch(`/delete_routine/${routineId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Rutina eliminada con éxito');
+                            location.reload();  // Recargar la página después de eliminar
+                        } else {
+                            alert('Error al eliminar la rutina');
+                        }
+                    });
+            }
+
+            // Función para cargar las rutinas del usuario
+            function loadRoutines() {
+                fetch('/get_routines')
+                    .then(response => response.json())
+                    .then(data => {
+                        const routinesList = document.getElementById('routines-list');
+                        routinesList.innerHTML = '';
+                        data.routines.forEach(routine => {
+                            const routineItem = document.createElement('li');
+                            routineItem.innerHTML = `
+                    <strong>${routine.routine_name}</strong>: 
+                    <ul>
+                    ${routine.exercises.map(e => `<li>${ e.name }: ${ e.sets } series de ${ e.reps } repeticiones</li>`)}
+                    </ul>
+                    <p>ID de rutina: ${routine.id}</p>
+                    <form id="delete-form-${routine.id}" style="display:inline;">
+                        <button type="button" class="delete-button" data-routine-id="${routine.id}">Eliminar</button>
+                    </form>
+                    <a href="/edit_routine/${routine.id}">Editar</a>
+                `;
+                            routinesList.appendChild(routineItem);
+                        });
+
+                        // Agregar eventos para los botones de eliminar
+                        document.querySelectorAll('.delete-button').forEach(button => {
+                            button.addEventListener('click', function () {
+                                const routineId = this.getAttribute('data-routine-id');
+                                deleteRoutine(routineId);
+                            });
+                        });
+                    });
+            }
+
+            // Cargar las rutinas del usuario al iniciar
+            loadRoutines();
+        </script>
+
+        <h3>Rutinas Favoritas</h3>
+        <ul>
+            {% for routine in favorites %}
+            <li>
+                <strong>{{ routine.routine_name }}</strong>
+                <ul>
+                    {% for exercise in routine.exercises %}
+                    <li>{{ exercise.name }}: {{ exercise.sets }} series de {{ exercise.reps }} repeticiones</li>
+                    {% endfor %}
+                </ul>
+            </li>
+            {% endfor %}
+        </ul>
+
+        <!-- Enlace para ver rutinas públicas -->
+        <a href="/public_routines">Ver Rutinas Públicas</a>
+    </div>
+</body>
+
+</html>
