@@ -11,37 +11,40 @@
 </head>
 
 <body>
-    <h2>Editar Rutina</h2>
-    <!-- Formulario para editar la rutina -->
-    <form id="edit-routine-form">
-        <label for="routine_name">Nombre de la Rutina:</label>
-        <!-- Campo de texto para el nombre de la rutina, precargado con el valor actual -->
-        <input type="text" id="routine_name" name="routine_name" value="{{ routine.routine_name }}" required>
-
-        <div id="exercises-container">
-            <!-- Iterar sobre los ejercicios existentes en la rutina -->
-            {% for exercise in routine.exercises %}
-            <div class="exercise">
-                <label for="exercise_name">Nombre del Ejercicio:</label>
-                <!-- Campo de texto para el nombre del ejercicio, precargado con el valor actual -->
-                <input type="text" name="exercise_name" value="{{ exercise.name }}" required>
-                <label for="sets">Series:</label>
-                <!-- Campo para ingresar la cantidad de series, precargado -->
-                <input type="number" name="sets" value="{{ exercise.sets }}" required>
-                <label for="reps">Repeticiones:</label>
-                <!-- Campo para ingresar la cantidad de repeticiones, precargado -->
-                <input type="number" name="reps" value="{{ exercise.reps }}" required>
-                <!-- Botón para eliminar el ejercicio -->
-                <button type="button" class="remove-exercise">Eliminar</button>
+    <div class="container">
+        <h2>Editar Rutina</h2>
+        <!-- Formulario para editar la rutina -->
+        <form id="edit-routine-form">
+            <label for="routine_name">Nombre de la Rutina:</label>
+            <!-- Campo de texto para el nombre de la rutina, precargado con el valor actual -->
+            <input type="text" id="routine_name" name="routine_name" value="{{ routine.routine_name }}" required>
+    
+            <div id="exercises-container">
+                <!-- Iterar sobre los ejercicios existentes en la rutina -->
+                {% for exercise in routine.exercises %}
+                <div class="exercise">
+                    <label for="exercise_name">Nombre del Ejercicio:</label>
+                    <!-- Campo de texto para el nombre del ejercicio, precargado con el valor actual -->
+                    <input type="text" name="exercise_name" value="{{ exercise.name }}" required>
+                    <label for="sets">Series:</label>
+                    <!-- Campo para ingresar la cantidad de series, precargado -->
+                    <input type="number" name="sets" value="{{ exercise.sets }}" required>
+                    <label for="reps">Repeticiones:</label>
+                    <!-- Campo para ingresar la cantidad de repeticiones, precargado -->
+                    <input type="number" name="reps" value="{{ exercise.reps }}" required>
+                    <!-- Botón para eliminar el ejercicio -->
+                    <button type="button" class="remove-exercise">Eliminar</button>
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
-        </div>
-
-        <!-- Botón para agregar otro ejercicio al formulario -->
-        <button type="button" id="add-exercise">Agregar Otro Ejercicio</button>
-        <!-- Botón para guardar los cambios en la rutina -->
-        <button type="submit">Guardar Cambios</button>
-    </form>
+    
+            <!-- Botón para agregar otro ejercicio al formulario -->
+            <button type="button" id="add-exercise">Agregar Otro Ejercicio</button>
+            <!-- Botón para guardar los cambios en la rutina -->
+            <button type="submit">Guardar Cambios</button>
+        </form>
+    </div>
+    
 
     <script>
         // Función para agregar ejercicios al formulario
